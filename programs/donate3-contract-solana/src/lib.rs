@@ -239,12 +239,13 @@ pub struct Initialize<'info> {
     associated_token::authority = signer
     )]
     pub token_account: Account<'info, TokenAccount>,
-
+    /// CHECK:` doc comment explaining why no checks through types are necessary.
     #[account(
     mut,
     address = find_master_edition_account(& collection_mint.key()).0
     )]
     pub master_edition: UncheckedAccount<'info>,
+    /// CHECK:` doc comment explaining why no checks through types are necessary.
     #[account(
     mut,
     address = find_metadata_account(& collection_mint.key()).0

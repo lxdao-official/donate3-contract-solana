@@ -5,6 +5,7 @@ import {Metaplex} from "@metaplex-foundation/js"
 import {getAssociatedTokenAddressSync} from "@solana/spl-token";
 
 const user = anchor.web3.Keypair.generate()
+const mintKey: anchor.web3.Keypair = anchor.web3.Keypair.generate();
 describe("donate3-contract-solana", () => {
     // Configure the client to use the local cluster.
     anchor.setProvider(anchor.AnchorProvider.env());
@@ -61,6 +62,38 @@ describe("donate3-contract-solana", () => {
         }).rpc();
 
         console.log("Your transaction signature", tx);
+
+
+        const NftTokenAccount = getAssociatedTokenAddressSync(
+            mintKey.publicKey,
+            user.publicKey,
+        );
+
+        const metadataPDA = metaplex
+            .nfts()
+            .pdas()
+            .metadata({mint: mintKey.publicKey});
+
+        const mintMasterPDA = metaplex
+            .nfts()
+            .pdas()
+            .masterEdition({mint: mintKey.publicKey});
+
+        await program.methods
+            .mint()
+            .accounts({
+                signer: user.publicKey,
+                tokenMint: mintKey.publicKey,
+                tokenAccount: NftTokenAccount,
+                metadataAccount: metadataPDA,
+                masterEdition: mintMasterPDA,
+                tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+                associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+            })
+            .signers([mintKey])
+            .rpc();
+
+
     });
 
 });
