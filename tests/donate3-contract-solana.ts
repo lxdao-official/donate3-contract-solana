@@ -52,7 +52,7 @@ describe("donate3-contract-solana", () => {
         // Add your test here.
         const tx = await program.methods.initialize().accounts({
             signer: user.publicKey,
-            rewardTokenMint: rewardTokenMintPDA,
+            collectionMint: rewardTokenMintPDA,
             tokenAccount: TokenAccount,
             metadataAccount: rewardTokenMintMetadataPDA,
             masterEdition: rewardTokenMintMasterPDA,

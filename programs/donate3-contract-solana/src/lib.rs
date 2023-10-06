@@ -5,15 +5,14 @@ use anchor_spl::{
     metadata::Metadata,
     token::{self, Mint, MintTo, Token, TokenAccount},
 };
-use mpl_token_metadata::{
-    pda::find_master_edition_account, pda::find_metadata_account,
-};
 use mpl_token_metadata::instruction::{create_master_edition_v3, create_metadata_accounts_v3};
+use mpl_token_metadata::pda::find_master_edition_account;
+use mpl_token_metadata::pda::find_metadata_account;
 use solana_program::pubkey::Pubkey;
 
 // This is your program's public key and it will update
 // automatically when you build the project.
-declare_id!("3y2CujbRo3nz6zQVaRWFHW61332R9RqfCmgAhGVpiESa");
+declare_id!("CL2oDTpfjkYhWxGeJUE35gbeuLmEPJ7Yw9Qs3qVZEt8q");
 
 #[program]
 mod hello_anchor {
@@ -117,17 +116,18 @@ pub struct Initialize<'info> {
     associated_token::authority = signer
     )]
     pub token_account: Account<'info, TokenAccount>,
-
+    /// CHECK:` doc comment explaining why no checks through types are necessary.
     #[account(
     mut,
     address = find_master_edition_account(& collection_mint.key()).0
     )]
-    pub master_edition: UncheckedAccount<'info>,
+    pub master_edition: AccountInfo<'info>,
+    /// CHECK:` doc comment explaining why no checks through types are necessary.
     #[account(
     mut,
     address = find_metadata_account(& collection_mint.key()).0
     )]
-    pub metadata_account: UncheckedAccount<'info>,
+    pub metadata_account: AccountInfo<'info>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
     pub token_metadata_program: Program<'info, Metadata>,
