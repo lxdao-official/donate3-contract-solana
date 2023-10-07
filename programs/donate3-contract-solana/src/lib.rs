@@ -1,3 +1,4 @@
+use anchor_lang::prelude::*;
 use anchor_lang::{
     solana_program::{
         program::{invoke, invoke_signed},
@@ -5,16 +6,19 @@ use anchor_lang::{
     },
     system_program,
 };
-use anchor_lang::prelude::*;
+use anchor_spl::associated_token;
 use anchor_spl::{
     associated_token::AssociatedToken,
     metadata::Metadata,
     token::{self, Mint, MintTo, Token, TokenAccount, Transfer},
 };
+
 use mpl_token_metadata::{
+    instruction as token_instruction,
     instruction::{create_master_edition_v3, create_metadata_accounts_v3},
     pda::{find_master_edition_account, find_metadata_account},
     state::{CollectionDetails, Creator},
+    ID as TOKEN_METADATA_ID,
 };
 use solana_program::pubkey::Pubkey;
 
@@ -55,9 +59,9 @@ pub mod donate3 {
                 ctx.accounts.collection_mint.key(),
                 ctx.accounts.signer.key(),
                 ctx.accounts.collection_mint.key(),
-                "Donate3".to_string(),
-                "DT3".to_string(),
-                "https://arweave.net/VJZNf86VXF-S1o5F_xfSi6Ur9jyqmEv_hVj_6g8v8Lg".to_string(),
+                "Donate3-Solana".to_string(),
+                "DNT".to_string(),
+                "https://bafkreifd7lfslwxvvj376hgeeieiny4vhpjt7ulgft77w7vemkmaivzdbq.ipfs.nftstorage.link".to_string(),
                 Some(creators),
                 0,
                 false,
@@ -153,9 +157,9 @@ pub mod donate3 {
                 ctx.accounts.signer.key(),
                 ctx.accounts.signer.key(),
                 ctx.accounts.signer.key(),
-                "Donate3".to_string(),
-                "DT3".to_string(),
-                "https://arweave.net/VJZNf86VXF-S1o5F_xfSi6Ur9jyqmEv_hVj_6g8v8Lg".to_string(),
+                "Donate3-Solana".to_string(),
+                "DNT".to_string(),
+                "https://bafkreifd7lfslwxvvj376hgeeieiny4vhpjt7ulgft77w7vemkmaivzdbq.ipfs.nftstorage.link".to_string(),
                 Some(creators),
                 0,
                 false,
