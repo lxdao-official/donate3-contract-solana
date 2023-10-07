@@ -1,23 +1,27 @@
+use anchor_lang::{
+    solana_program::{
+        program::{invoke, invoke_signed},
+        system_instruction,
+    },
+    system_program,
+};
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::program::{invoke, invoke_signed};
 use anchor_spl::{
     associated_token::AssociatedToken,
     metadata::Metadata,
-    token::{self, Mint, MintTo, Token, TokenAccount},
+    token::{self, Mint, MintTo, Token, TokenAccount, Transfer},
 };
 use mpl_token_metadata::{
-    pda::find_master_edition_account, pda::find_metadata_account, state::CollectionDetails,
+    instruction::{create_master_edition_v3, create_metadata_accounts_v3},
+    pda::{find_master_edition_account, find_metadata_account},
+    state::{CollectionDetails, Creator},
 };
-use mpl_token_metadata::instruction::{create_master_edition_v3, create_metadata_accounts_v3};
-use mpl_token_metadata::state::Creator;
 use solana_program::pubkey::Pubkey;
 
-// This is your program's public key and it will update
-// automatically when you build the project.
-declare_id!("FxnUsQGyFyBsChLbWA8Rd9NTHN2KhGLoity1dMMt26of");
+declare_id!("3yz5aQ6A5w5mWicriDkAHAqGEC4LDU2A9gLmtxTUbmdx");
 
 #[program]
-mod donate3 {
+pub mod donate3 {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -102,7 +106,28 @@ mod donate3 {
         Ok(())
     }
 
-    pub fn mint(ctx: Context<MintNFT>) -> Result<()> {
+    pub fn transfer_lamports(
+        ctx: Context<TransferLamports>,
+        amount: u64,
+        message: String,
+    ) -> Result<()> {
+        let from_account = &ctx.accounts.signer;
+        let to_account = &ctx.accounts.to;
+
+        // Create the transfer instruction
+        let transfer_instruction =
+            system_instruction::transfer(from_account.key, to_account.key, amount);
+
+        // Invoke the transfer instruction
+        anchor_lang::solana_program::program::invoke_signed(
+            &transfer_instruction,
+            &[
+                from_account.to_account_info(),
+                to_account.clone(),
+                ctx.accounts.system_program.to_account_info(),
+            ],
+            &[],
+        )?;
         msg!("Initializing Mint Ticket");
         let cpi_accounts = MintTo {
             mint: ctx.accounts.token_mint.to_account_info(),
@@ -175,12 +200,46 @@ mod donate3 {
         )?;
         Ok(())
     }
+
+    pub fn transfer_spl_tokens(
+        ctx: Context<TransferSpl>,
+        amount: u64,
+        message: String,
+    ) -> Result<()> {
+        let destination = &ctx.accounts.to_ata;
+        let source = &ctx.accounts.from_ata;
+        let token_program = &ctx.accounts.token_program;
+        let authority = &ctx.accounts.from;
+        // Transfer tokens from taker to initializer
+        let cpi_accounts = Transfer {
+            from: source.to_account_info().clone(),
+            to: destination.to_account_info().clone(),
+            authority: authority.to_account_info().clone(),
+        };
+        let cpi_program = token_program.to_account_info();
+
+        token::transfer(CpiContext::new(cpi_program, cpi_accounts), amount)?;
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
-pub struct MintNFT<'info> {
+pub struct TransferSpl<'info> {
+    pub from: Signer<'info>,
+    #[account(mut)]
+    pub from_ata: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub to_ata: Account<'info, TokenAccount>,
+    pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct TransferLamports<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
+    #[account(mut)]
+    pub to: AccountInfo<'info>,
     /// CHECK:` doc comment explaining why no checks through types are necessary.
     #[account(
     init,
@@ -239,13 +298,12 @@ pub struct Initialize<'info> {
     associated_token::authority = signer
     )]
     pub token_account: Account<'info, TokenAccount>,
-    /// CHECK:` doc comment explaining why no checks through types are necessary.
+
     #[account(
     mut,
     address = find_master_edition_account(& collection_mint.key()).0
     )]
     pub master_edition: UncheckedAccount<'info>,
-    /// CHECK:` doc comment explaining why no checks through types are necessary.
     #[account(
     mut,
     address = find_metadata_account(& collection_mint.key()).0
@@ -257,4 +315,3 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
 }
-
